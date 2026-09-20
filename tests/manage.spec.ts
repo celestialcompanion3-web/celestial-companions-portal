@@ -1,0 +1,157 @@
+import { expect, test } from '@playwright/test'
+import { signInAndWait } from './helpers'
+
+test('the owner can add an update and it appears in the progress log', async ({ page }) => {
+  await signInAndWait(page, 'owner')
+  await page.goto('/manage')
+  await page.getByRole('tab', { name: 'Updates' }).click()
+  await page.getByRole('button', { name: 'Add update' }).click()
+  const form = page.getByRole('form', { name: 'New update' })
+  await form.getByLabel('Title').fill('A brand new milestone')
+  await form.getByLabel('Summary').fill('Something was finished.')
+  await form.getByLabel(/^Version/).fill('v0.5')
+  await form.getByLabel('What changed (optional)').fill('- one thing\n- another thing')
+  await form.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByText('Added.')).toBeVisible()
+
+  await page.goto('/progress')
+  const first = page.locator('.timeline > li').first()
+  await expect(first).toContainText('A brand new milestone')
+  await expect(first).toContainText('v0.5')
+  await first.getByText('What changed').click()
+  await expect(first.getByText('another thing')).toBeVisible()
+})
+
+test('a draft update is visible to the owner only', async ({ page }) => {
+  await signInAndWait(page, 'owner')
+  await page.goto('/manage')
+  await page.getByRole('tab', { name: 'Updates' }).click()
+  await page.getByRole('button', { name: 'Add update' }).click()
+  const form = page.getByRole('form', { name: 'New update' })
+  await form.getByLabel('Title').fill('A secret draft')
+  await form.getByLabel('Summary').fill('Not ready.')
+  await form.getByLabel('Status').selectOption('draft')
+  await form.getByRole('button', { name: 'Save' }).click()
+  await page.goto('/progress')
+  await expect(page.getByText('A secret draft')).toBeVisible()
+
+  await page.getByRole('link', { name: 'Your account' }).click()
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await signInAndWait(page, 'client')
+  await page.goto('/progress')
+  await expect(page.locator('.timeline > li')).toHaveCount(7)
+  await expect(page.getByText('A secret draft')).toHaveCount(0)
+})
+
+test('the live demo details can be changed, and a bad link is refused', async ({ page }) => {
+  await signInAndWait(page, 'owner')
+  await page.goto('/manage')
+  const form = page.getByRole('form', { name: 'Live demo details' })
+  await form.getByLabel('Link').fill('http://not-secure.example')
+  await form.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByRole('alert')).toContainText('https://')
+
+  await form.getByLabel('Link').fill('https://demo.invalid/new')
+  await form.getByLabel(/^Version/).fill('v0.9')
+  await form.getByLabel('Note').fill('A changed note.')
+  await form.getByRole('button', { name: 'Save' }).click()
+  await expect(form.getByText('Saved.')).toBeVisible()
+
+  await page.goto('/progress')
+  await expect(page.getByRole('link', { name: /Open the demo/ })).toHaveAttribute('href', 'https://demo.invalid/new')
+  await expect(page.getByText('A changed note.')).toBeVisible()
+  await expect(page.locator('.pill', { hasText: 'v0.9' }).first()).toBeVisible()
+})
+
+test('questions: the owner can close a question and record an emailed answer as a note', async ({ page }) => {
+  await signInAndWait(page, 'owner')
+  await page.goto('/manage')
+  await page.getByRole('tab', { name: 'Questions' }).click()
+  await page.locator('.manage-row', { hasText: 'Could branch staff collect photos' }).getByRole('button', { name: 'Edit' }).click()
+  const form = page.getByRole('form', { name: 'Edit question' })
+  await form.getByLabel('Status').selectOption('closed')
+  await form.getByLabel(/^Note/).fill('Answered by email: yes, with a checklist.')
+  await form.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByText('Saved.')).toBeVisible()
+
+  await page.goto('/questions')
+  const card = page.locator('section.question', { hasText: 'Could branch staff collect photos' })
+  await expect(card).toContainText('Answered by email: yes, with a checklist.')
+  await expect(card.getByRole('textbox')).toHaveCount(0)
+})
+
+test('weekly reports: draft this week\'s report, save it as a draft, copy it as an email', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await signInAndWait(page, 'owner')
+  await page.goto('/manage')
+  await page.getByRole('tab', { name: 'Documents' }).click()
+  await page.getByRole('button', { name: /Draft this week/ }).click()
+  const form = page.getByRole('form', { name: 'New document' })
+  const text = await form.getByLabel(/^Text/).inputValue()
+  expect(text).toContain('## What I did this week')
+  expect(text).not.toMatch(/\[CHECK|TODO|\bwe\b|\bour\b/i)
+  await expect(form.getByLabel('Status')).toHaveValue('draft')
+
+  await form.getByRole('button', { name: 'Copy as email' }).click()
+  const email = await form.getByRole('textbox', { name: 'Email text' }).inputValue()
+  expect(email).toContain('Hello Ms Sample,')
+  expect(email).toContain('/reports/week-')
+  expect(email).not.toContain('##')
+  expect(email).not.toMatch(/\[CHECK/)
+  // Windows changes line endings on the clipboard, so compare the words only.
+  const pasted = await page.evaluate(() => navigator.clipboard.readText())
+  const words = (text: string) => text.replace(/\s+/g, ' ').trim()
+  expect(words(pasted)).toBe(words(email))
+
+  await form.getByRole('button', { name: 'Save', exact: true }).click()
+  await expect(page.getByText('Added.')).toBeVisible()
+  await expect(page.locator('.manage-row', { hasText: 'Weekly report: week of' }).first()).toContainText('Draft')
+
+  // Publishing it makes it appear for the client.
+  await page.locator('.manage-row', { hasText: 'Weekly report: week of' }).first().getByRole('button', { name: 'Edit' }).click()
+  await page.getByRole('form', { name: 'Edit document' }).getByLabel('Status').selectOption('published')
+  await page.getByRole('form', { name: 'Edit document' }).getByRole('button', { name: 'Save', exact: true }).click()
+  await expect(page.getByText('Saved.')).toBeVisible()
+
+  await page.getByRole('link', { name: 'Your account' }).click()
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await signInAndWait(page, 'client')
+  await page.goto('/reports')
+  await expect(page.locator('.row-list li')).toHaveCount(1)
+})
+
+test('the Markdown is sanitised: scripts and handlers are removed, heading ids and styles stay', async ({ page }) => {
+  await signInAndWait(page, 'owner')
+  await page.goto('/manage')
+  await page.getByRole('tab', { name: 'Documents' }).click()
+  await page.getByRole('button', { name: 'Add document' }).click()
+  const form = page.getByRole('form', { name: 'New document' })
+  await form.getByLabel('Title').fill('Sanitiser check')
+  await form.getByLabel('Address').fill('sanitiser-check')
+  await form.getByLabel(/^Text/).fill(
+    '## Kept heading\n\n<div id="keep-me" style="color: rgb(255, 0, 0)">styled</div>\n\n<img src="x" onerror="window.__pwned = 1">\n\n<script>window.__pwned = 2</script>\n\n[a link](javascript:window.__pwned=3)\n',
+  )
+  await form.getByLabel('Status').selectOption('published')
+  await form.getByRole('button', { name: 'Save', exact: true }).click()
+  await expect(page.getByText('Added.')).toBeVisible()
+
+  await page.goto('/reports/sanitiser-check')
+  await expect(page.locator('h2#kept-heading')).toBeVisible()
+  await expect(page.locator('#keep-me')).toHaveCSS('color', 'rgb(255, 0, 0)')
+  await expect(page.locator('.prose script')).toHaveCount(0)
+  await expect(page.locator('.prose img[onerror]')).toHaveCount(0)
+  await expect(page.locator('.prose a[href^="javascript"]')).toHaveCount(0)
+  expect(await page.evaluate(() => (window as unknown as { __pwned?: number }).__pwned)).toBeUndefined()
+})
+
+test('a document address that is not allowed is refused with a message', async ({ page }) => {
+  await signInAndWait(page, 'owner')
+  await page.goto('/manage')
+  await page.getByRole('tab', { name: 'Documents' }).click()
+  await page.getByRole('button', { name: 'Add document' }).click()
+  const form = page.getByRole('form', { name: 'New document' })
+  await form.getByLabel('Title').fill('Duplicate')
+  await form.getByLabel('Address').fill('blueprint')
+  await form.getByRole('button', { name: 'Save', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('duplicate')
+})

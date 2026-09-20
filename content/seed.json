@@ -1,0 +1,164 @@
+{
+  "documents": [
+    {
+      "kind": "blueprint",
+      "slug": "blueprint",
+      "title": "Celestial Companions Blueprint",
+      "summary": "How the whole system fits together: who uses it, how one pet becomes a companion, what exists today, the order of work, and the questions I need help with.",
+      "file": "blueprint.md",
+      "pinned": true,
+      "status": "published",
+      "published_at": "2026-09-19T12:00:00Z"
+    },
+    {
+      "kind": "weekly",
+      "slug": "week-2026-09-14",
+      "title": "Weekly report: week of 14 September 2026",
+      "summary": "A working 3D cat, a first look at the limits of automatic skeletons, the blueprint, and this private site.",
+      "file": "week-2026-09-14.md",
+      "pinned": false,
+      "period_start": "2026-09-14",
+      "period_end": "2026-09-20",
+      "status": "draft"
+    }
+  ],
+  "questions": [
+    {
+      "key": "q1",
+      "document": "blueprint",
+      "position": 1,
+      "status": "open",
+      "prompt": "How long is a family willing to wait for their companion, and what should they be able to do while they wait?",
+      "why": "Custom memorial keepsakes usually take days or weeks, so a wait is normal. What matters is what feels respectful. For example, should they be able to hear their pet's sounds straight away, and should the comforting conversation be there before the 3D companion is ready? This shapes the status page."
+    },
+    {
+      "key": "q2",
+      "document": "blueprint",
+      "position": 2,
+      "status": "closed",
+      "prompt": "Who would finish each companion by hand: someone on your team, a freelancer, or a partner studio?",
+      "why": "The AI gives a first draft in minutes, but a person has to make it right, and that step sets both the cost and the turnaround. If you have a route to a 3D artist, that shortens everything.",
+      "note": "Answered by email on 20 September: there is no artist yet, so one would need to be found, whether one person or a studio. The preference is to outsource."
+    },
+    {
+      "key": "q3",
+      "document": "blueprint",
+      "position": 3,
+      "status": "open",
+      "prompt": "What should a family end up with: a private link, a QR code on a keepsake, a tablet, or a display at the branch?",
+      "why": "The companion works the same in all of them, but how I deliver it, and any hologram plans, depend on the answer."
+    },
+    {
+      "key": "q4",
+      "document": "blueprint",
+      "position": 4,
+      "status": "open",
+      "prompt": "Could branch staff collect photos and sounds when a pet is first brought in?",
+      "why": "Clear photos from several angles make a big difference to the 3D model. If staff can capture them at the start, quality goes up and families have less to do at a hard time."
+    }
+  ],
+  "decisions": [
+    {
+      "title": "Which animals to start with",
+      "detail": "Cats and dogs need different skeletons, and starting with one keeps the first version simpler.",
+      "status": "open",
+      "position": 1
+    },
+    {
+      "title": "How long families' photos and recordings are kept",
+      "detail": "Families share photos and voices at a hard time, so this needs UK data-protection advice, including how deletion on request works.",
+      "status": "open",
+      "position": 2
+    },
+    {
+      "title": "What the comforting conversation will and won't say",
+      "detail": "It needs limits on what it says and when it points someone to real support, ideally reviewed by a grief specialist.",
+      "status": "open",
+      "position": 3
+    },
+    {
+      "title": "Which AI language model service powers the conversation",
+      "detail": "I haven't chosen one, or whether to run my own. It affects cost and where families' words are processed.",
+      "status": "open",
+      "position": 4
+    },
+    {
+      "title": "Who acts as the studio staff at the start",
+      "status": "decided",
+      "outcome": "I do, running each step by hand, until there is a team.",
+      "decided_on": "2026-09-20",
+      "position": 5
+    },
+    {
+      "title": "How each companion is finished by hand",
+      "status": "decided",
+      "outcome": "By outsourcing to a freelance 3D artist or a small studio. I will say when it is time to start looking.",
+      "decided_on": "2026-09-20",
+      "position": 6
+    },
+    {
+      "title": "What families can send",
+      "status": "decided",
+      "outcome": "Photos and videos are both welcome, along with recordings of the pet's sounds.",
+      "decided_on": "2026-09-20",
+      "position": 7
+    },
+    {
+      "title": "A hologram display at a branch",
+      "detail": "Optional and later. Only worth trying once the companion itself has proven it works.",
+      "status": "parked",
+      "position": 8
+    }
+  ],
+  "updates": [
+    {
+      "title": "Feasibility research and the plan for the companion engine",
+      "summary": "I researched what is achievable for holograms, phone and tablet avatars, animal mode and the comforting conversation, and wrote up an honest view of each. I also set out the plan for an AI draft that a person then finishes.",
+      "released_on": "2026-09-10",
+      "status": "published"
+    },
+    {
+      "title": "First companion prototype",
+      "summary": "A first working prototype: a living portrait, then a 3D pet with breathing, blinking and a tail, in a viewer I built myself so it does not depend on an outside service.",
+      "released_on": "2026-09-10",
+      "status": "published"
+    },
+    {
+      "title": "Loading a real 3D model, and the budget and roadmap",
+      "summary": "The prototype can now load a real 3D model of a pet as well as the stylised one. I also wrote the budget and roadmap document and a short presentation of the proof of concept.",
+      "released_on": "2026-09-11",
+      "status": "published"
+    },
+    {
+      "title": "A cleaner, more professional look",
+      "summary": "I redesigned the companion player with a minimal look, ready for progress screenshots.",
+      "released_on": "2026-09-13",
+      "status": "published"
+    },
+    {
+      "title": "A real rigged model that moves by its own skeleton",
+      "summary": "The player now loads a rigged 3D cat from Tripo and moves its skeleton: breathing, looking toward you, wagging its tail, sitting and lying down, with a button for each pose.",
+      "details_md": "- The skeleton is driven by the same behaviour as the stand-in pet, so breathing, head turns and tail wags respond to touch and to time.\n- A button for each pose (stand, alert, happy, sit, lie down) makes it easy to inspect.\n- A model whose skeleton is broken is repaired on loading where possible, and the player says so when a skeleton is too simple to move.",
+      "released_on": "2026-09-19",
+      "status": "published"
+    },
+    {
+      "title": "The system blueprint",
+      "summary": "I wrote the blueprint: how the whole system fits together, who uses it, how one pet becomes a companion, the order of work, and the questions I need your help with.",
+      "released_on": "2026-09-19",
+      "status": "published"
+    },
+    {
+      "title": "A private portal for reports, questions and progress",
+      "summary": "This site: the blueprint, your questions and my replies, a running list of progress, the live demo, and a weekly report, all behind a sign-in.",
+      "released_on": "2026-09-20",
+      "status": "published"
+    }
+  ],
+  "settings": {
+    "prototype_url": "",
+    "prototype_version": "",
+    "prototype_updated": "",
+    "prototype_note": ""
+  }
+}
